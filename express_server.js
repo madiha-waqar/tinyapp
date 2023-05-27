@@ -45,6 +45,11 @@ app.get("/urls/:id", (req, res) => {  // new route to render individual urls by 
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id]; // capture longURL from database against /u/:id"
+  res.redirect(longURL);
+});
+
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL; // id-longURL key-value pair are saved to the urlDatabase
