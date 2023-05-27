@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs"); // Set EJS as view engine
+app.use(express.urlencoded({ extended: true })); // Express's body-parser to make buffer data readable
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
