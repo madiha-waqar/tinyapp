@@ -47,7 +47,13 @@ app.get("/urls/:id", (req, res) => {  // new route to render individual urls by 
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id]; // capture longURL from database against /u/:id"
-  res.redirect(longURL);
+  if (longURL) {
+    res.redirect(longURL);
+  }
+  else {
+    res.statusCode = 404;
+    res.send("404 Page Not Found");
+  }
 });
 
 app.post("/urls", (req, res) => {
