@@ -19,5 +19,6 @@
   "homepage": "https://github.com/madiha-waqar/tinyapp-#readme",
   "dependencies": {
     "express": "^4.18.2"
-  }
+  },
+  "devDependencies": {}
 }
