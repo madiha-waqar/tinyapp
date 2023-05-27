@@ -11,7 +11,7 @@ const urlDatabase = {
 };
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const generateRandomString = () => {
+const generateRandomString = () => { // generate shorturl/id string of 6 alphanumeric charcters   
   let id = ' ';
   for (let i = 0; i < 6; i++) {
     id += chars[Math.floor(Math.random() * chars.length)];
@@ -46,8 +46,9 @@ app.get("/urls/:id", (req, res) => {  // new route to render individual urls by 
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL; // id-longURL key-value pair are saved to the urlDatabase
+  res.redirect(`/urls/${shortURL}`); //redirect the user to a new page that shows them the new short url they created
 });
 
 app.listen(PORT, () => {
