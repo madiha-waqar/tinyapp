@@ -10,6 +10,15 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const generateRandomString = () => {
+  let id = ' ';
+  for (let i = 0; i < 6; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!"); // response can contain somple string
 });
