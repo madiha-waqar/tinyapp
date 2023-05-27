@@ -62,6 +62,11 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`); //redirect the user to a new page that shows them the new short url they created
 });
 
+app.post("/urls/:id", (req, res) => { // POST route that updates the URL resource
+  urlDatabase[req.params.id] = req.body.updatedURL;
+  res.redirect(`/urls`);
+});
+
 app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL resource
   delete urlDatabase[req.params.id]
   res.redirect(`/urls`);
