@@ -63,7 +63,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => { // POST route that updates the URL resource
-  urlDatabase[req.params.id] = req.body.updatedURL;
+  urlDatabase[req.params.id] = req.body.updatedURL; // Store the value of updated url against the shorturl selected
   res.redirect(`/urls`);
 });
 
