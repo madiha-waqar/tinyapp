@@ -1,9 +1,12 @@
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs"); // Set EJS as view engine
 app.use(express.urlencoded({ extended: true })); // Express's body-parser to make buffer data readable
+app.use(cookieParser()); // Use Express's cookie-parser
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -32,17 +35,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"]}; // update route for login-username 
+  const templateVars = { urls: urlDatabase, username: req.cookies['username']}; // update route for login-username 
   res.render("urls_index", templateVars); // pass the URL data to url view template
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
-  const templateVars = {username: req.cookies["username"]}; //// update route for login-username 
+  const templateVars = {username: req.cookies['username']}; //// update route for login-username 
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], sername: req.cookies["username"] }; // update route for login-username 
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], sername: req.cookies['username'] }; // update route for login-username 
   res.render("urls_show", templateVars);
 });
 
