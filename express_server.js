@@ -32,16 +32,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"]}; // update route for login-username 
   res.render("urls_index", templateVars); // pass the URL data to url view template
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
-  res.render("urls_new");
+  const templateVars = {username: req.cookies["username"]}; //// update route for login-username 
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], sername: req.cookies["username"] }; // update route for login-username 
   res.render("urls_show", templateVars);
 });
 
