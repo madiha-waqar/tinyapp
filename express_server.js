@@ -73,7 +73,7 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
 });
 
 app.post("/login", (req, res) => { // POST route to handle the /login
-  res.cookie('username', req.body.username);
+  res.cookie('username',req.body.username); //Store a cookie with name=username and value=username coming from login form
   res.redirect(`/urls`);
 });
 
