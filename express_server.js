@@ -72,6 +72,11 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
   res.redirect(`/urls`);
 });
 
+app.post("/login", (req, res) => { // POST route to handle the /login
+  res.cookie('username', req.body.username);
+  res.redirect(`/urls`);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
