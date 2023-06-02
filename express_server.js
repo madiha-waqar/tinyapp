@@ -45,7 +45,7 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], sername: req.cookies['username'] }; // update route for login-username 
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies['username'] }; // update route for login-username 
   res.render("urls_show", templateVars);
 });
 
@@ -58,6 +58,11 @@ app.get("/u/:id", (req, res) => {
     res.statusCode = 404;
     res.send("404 Page Not Found");
   }
+});
+
+app.get("/register", (req, res) => {  // new route to registration page
+  const templateVars = { username: req.cookies['username'] }; 
+  res.render("urls_register", templateVars);
 });
 
 app.post("/urls", (req, res) => {
