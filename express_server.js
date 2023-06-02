@@ -13,7 +13,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = {
+const users = {  // create global users object
   user1: {
     id: "user1",
     email: "user1@mail.com",
@@ -28,7 +28,7 @@ const users = {
 
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const generateRandomString = () => { // generate shorturl/id string of 6 alphanumeric charcters   
-  let id = ' ';
+  let id = '';
   for (let i = 0; i < 6; i++) {
     id += chars[Math.floor(Math.random() * chars.length)];
   }
@@ -101,6 +101,18 @@ app.post("/login", (req, res) => { // POST route to handle the /login
 
 app.post("/logout", (req, res) => { // POST route to handle the /logout
   res.clearCookie('username'); //Clear the cookie on pressing the logout button
+  res.redirect(`/urls`); // redirect to index url page
+});
+
+app.post("/register", (req, res) => { // POST route to handle the /register functionality
+  const id = generateRandomString();
+  users[id] = {
+    id,
+    email: req.body.email,
+    password: req.body.password
+  }
+  res.cookie('user_id', id);
+  console.log(users)
   res.redirect(`/urls`); // redirect to index url page
 });
 
