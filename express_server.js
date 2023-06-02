@@ -13,6 +13,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  user1: {
+    id: "user1",
+    email: "user1@mail.com",
+    password: "user1",
+  },
+  user2: {
+    id: "user2",
+    email: "user2@mail.com",
+    password: "user2",
+  },
+};
+
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const generateRandomString = () => { // generate shorturl/id string of 6 alphanumeric charcters   
   let id = ' ';
