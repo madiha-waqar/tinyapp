@@ -38,7 +38,7 @@ const generateRandomString = () => { // generate shorturl/id string of 6 alphanu
 const getUserByEmail = (email) => { // helper function for user lookup through email address
   for (const user in users) {
     if (users[user].email === email) {
-      return users;
+      return users[user]; // returns the user with matching email address
     }
   }
   return null;
@@ -109,7 +109,14 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
 });
 
 app.post("/login", (req, res) => { // POST route to handle the /login
-  res.cookie('username', req.body.username); //Store a cookie with name=username and value=username coming from login form
+  const user = getUserByEmail(req.body.email); // if entered email matches with users email in database
+  if (!user) {
+    return res.status(403).send('The email is not registered');
+  }
+  if (req.body.password !== user.password) {
+    return res.status(403).send('The password does not match. Please try again.');
+  }
+  res.cookie('user_id', user.id); //Sets user_id cookie with matching user's ID on successful login
   res.redirect(`/urls`);
 });
 
