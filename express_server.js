@@ -35,6 +35,15 @@ const generateRandomString = () => { // generate shorturl/id string of 6 alphanu
   return id;
 };
 
+const userLookup = (email) => { // helper function for user lookup through email address
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users;
+    }
+  }
+  return null;
+}
+
 app.get("/", (req, res) => {
   res.send("Hello!"); // response can contain somple string
 });
@@ -48,17 +57,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies['user_id']]}; // update route for login-username 
+  const templateVars = { urls: urlDatabase, user: users[req.cookies['user_id']] }; // update route for login-username 
   res.render("urls_index", templateVars); // pass the URL data to url view template
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
-  const templateVars = {user: users[req.cookies['user_id']]}; //// update route for login-username 
+  const templateVars = { user: users[req.cookies['user_id']] }; //// update route for login-username 
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']]}; // update route for login-username 
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']] }; // update route for login-username 
   res.render("urls_show", templateVars);
 });
 
@@ -74,7 +83,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {  // new route to registration page
-  const templateVars = { user: users[req.cookies['user_id']] }; 
+  const templateVars = { user: users[req.cookies['user_id']] };
   res.render("urls_register", templateVars);
 });
 
@@ -95,7 +104,7 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
 });
 
 app.post("/login", (req, res) => { // POST route to handle the /login
-  res.cookie('username',req.body.username); //Store a cookie with name=username and value=username coming from login form
+  res.cookie('username', req.body.username); //Store a cookie with name=username and value=username coming from login form
   res.redirect(`/urls`);
 });
 
@@ -106,13 +115,22 @@ app.post("/logout", (req, res) => { // POST route to handle the /logout
 
 app.post("/register", (req, res) => { // POST route to handle the /register functionality
   const id = generateRandomString();
-  users[id] = {
-    id,
-    email: req.body.email,
-    password: req.body.password
+
+  if (!req.body.email || !req.body.password) { // if user has not input email address or password
+    return res.status(400).send('Email or password fields cannot be empty for user registration');
   }
-  res.cookie('user_id', id);
-  res.redirect(`/urls`); // redirect to index url page
+  if (!userLookup(req.body.email)) { // if email address doesnt exist in user database then add the user
+    users[id] = {
+      id,
+      email: req.body.email,
+      password: req.body.password
+    }
+    res.cookie('user_id', id);
+    res.redirect(`/urls`); // redirect to index url page
+  }
+  else {
+    return res.status(400).send('This email has already been registered with us!');
+  }
 });
 
 app.listen(PORT, () => {
