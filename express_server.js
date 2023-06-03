@@ -35,7 +35,7 @@ const generateRandomString = () => { // generate shorturl/id string of 6 alphanu
   return id;
 };
 
-const userLookup = (email) => { // helper function for user lookup through email address
+const getUserByEmail = (email) => { // helper function for user lookup through email address
   for (const user in users) {
     if (users[user].email === email) {
       return users;
@@ -119,7 +119,7 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
   if (!req.body.email || !req.body.password) { // if user has not input email address or password
     return res.status(400).send('Email or password fields cannot be empty for user registration');
   }
-  if (!userLookup(req.body.email)) { // if email address doesnt exist in user database then add the user
+  if (!getUserByEmail(req.body.email)) { // if email address doesnt exist in user database then add the user
     users[id] = {
       id,
       email: req.body.email,
