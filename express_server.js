@@ -48,17 +48,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies['username']}; // update route for login-username 
+  const templateVars = { urls: urlDatabase, user: users[req.cookies['user_id']]}; // update route for login-username 
   res.render("urls_index", templateVars); // pass the URL data to url view template
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
-  const templateVars = {username: req.cookies['username']}; //// update route for login-username 
+  const templateVars = {user: users[req.cookies['user_id']]}; //// update route for login-username 
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies['username'] }; // update route for login-username 
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']]}; // update route for login-username 
   res.render("urls_show", templateVars);
 });
 
@@ -74,7 +74,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {  // new route to registration page
-  const templateVars = { username: req.cookies['username'] }; 
+  const templateVars = { user: users[req.cookies['user_id']] }; 
   res.render("urls_register", templateVars);
 });
 
@@ -112,7 +112,6 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
     password: req.body.password
   }
   res.cookie('user_id', id);
-  console.log(users)
   res.redirect(`/urls`); // redirect to index url page
 });
 
