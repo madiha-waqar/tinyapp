@@ -87,6 +87,11 @@ app.get("/register", (req, res) => {  // new route to registration page
   res.render("urls_register", templateVars);
 });
 
+app.get("/login", (req, res) => {  // new route to login page
+  const templateVars = { user: users[req.cookies['user_id']] };
+  res.render("urls_login", templateVars);
+});
+
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL; // id-longURL key-value pair are saved to the urlDatabase
