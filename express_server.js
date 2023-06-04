@@ -122,7 +122,7 @@ app.post("/login", (req, res) => { // POST route to handle the /login
 
 app.post("/logout", (req, res) => { // POST route to handle the /logout
   res.clearCookie('user_id'); //Clear the cookie on pressing the logout button
-  res.redirect(`/urls`); // redirect to index url page
+  res.redirect(`/login`); // redirect to index url page
 });
 
 app.post("/register", (req, res) => { // POST route to handle the /register functionality
