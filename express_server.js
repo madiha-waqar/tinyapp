@@ -57,18 +57,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies['user_id']] }; // update route for login-username 
+  const templateVars = { urls: urlDatabase, user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   res.render("urls_index", templateVars); // pass the URL data to url view template
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
-  const templateVars = { user: users[req.cookies['user_id']] }; //// update route for login-username 
+  const templateVars = { user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']] }; // update route for login-username 
-  res.render("urls_show", templateVars);
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
 });
 
 app.get("/u/:id", (req, res) => {
