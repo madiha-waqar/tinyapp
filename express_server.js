@@ -53,11 +53,11 @@ const getUserByEmail = (email) => { // helper function for user lookup through e
 const urlsForUser = (id) => {
   const userUrls = {};
   for (const shortId in urlDatabase) {
-    if (id === urlDatabase[shortId].userID) {
-      userUrls[shortId] = urlDatabase[id];
+    if ( urlDatabase[shortId].userID === id) {
+      userUrls[shortId] = urlDatabase[shortId];
     }
   }
-  return userUrls;
+  return userUrls; // returns the URLs where the userID is equal to the id of the currently logged-in user.
 };
 
 app.get("/", (req, res) => {
@@ -73,12 +73,14 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlsForUser[req.cookies['user_id']], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  console.log('Testing user', urlsForUser(req.cookies['user_id']) )
+
+  const templateVars = { urls: urlsForUser(req.cookies['user_id']), user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   if (req.cookies['user_id']) {
     res.render("urls_index", templateVars); // pass the URL data to url view template
   }
   else
-    return res.status(403).send("<h2>User is not logged in<h2>");
+    return res.status(403).send("<h2>Please register or login to access URLS<h2>");
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
@@ -92,19 +94,21 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, urls: urlsForUser[req.cookies['user_id']], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.cookies['user_id']), user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  if (urlDatabase[req.params.id]) {
   res.render("urls_show", templateVars);
-});
+}});
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]; // capture longURL from database against /u/:id"
+  if (urlDatabase[req.params.id]) {
+  const longURL = urlDatabase[req.params.id].longURL; // capture longURL from database against /u/:id"
   if (longURL) {
     res.redirect(longURL);
   }
   else {
-    res.status(403).send("<h2>The requested shortened URL does not exist<h2>");
+    res.status(404).send("<h2>The requested shortened URL does not exist<h2>");
   }
-});
+}});
 
 app.get("/register", (req, res) => {  // new route to registration page
   const templateVars = { user: users[req.cookies['user_id']] };
@@ -128,13 +132,20 @@ app.get("/login", (req, res) => {  // new route to login page
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL; // id-longURL key-value pair are saved to the urlDatabase
+  urlDatabase[shortURL] = {  // Update according to new db structure
+    longURL: req.body.longURL,
+    userID: req.cookies['user_id']
+  };
   res.redirect(`/urls/${shortURL}`); //redirect the user to a new page that shows them the new short url they created
 });
 
 app.post("/urls/:id", (req, res) => { // POST route that updates the URL resource
-  urlDatabase[req.params.id] = req.body.updatedURL; // Store the value of updated url against the shorturl selected
-  res.redirect(`/urls`);
+  if ((urlDatabase[req.params.id].userID) === req.cookies['user_id'])
+  {
+    urlDatabase[req.params.id].longURL = req.body.updatedURL; // Store the value of updated url against the shorturl selected
+  console.log('This is updated db:', urlDatabase)    
+    res.redirect(`/urls`);
+  }
 });
 
 app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL resource
