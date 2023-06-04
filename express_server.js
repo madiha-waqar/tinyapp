@@ -50,6 +50,16 @@ const getUserByEmail = (email) => { // helper function for user lookup through e
   return null;
 }
 
+const urlsForUser = (id) => {
+  const userUrls = {};
+  for (const shortId in urlDatabase) {
+    if (id === urlDatabase[shortId].userID) {
+      userUrls[shortId] = urlDatabase[id];
+    }
+  }
+  return userUrls;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!"); // response can contain somple string
 });
@@ -63,8 +73,12 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
-  res.render("urls_index", templateVars); // pass the URL data to url view template
+  const templateVars = { urls: urlsForUser[req.cookies['user_id']], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  if (req.cookies['user_id']) {
+    res.render("urls_index", templateVars); // pass the URL data to url view template
+  }
+  else
+    return res.status(403).send("<h2>User is not logged in<h2>");
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
@@ -78,7 +92,7 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  const templateVars = { id: req.params.id, urls: urlsForUser[req.cookies['user_id']], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   res.render("urls_show", templateVars);
 });
 
