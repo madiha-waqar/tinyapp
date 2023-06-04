@@ -63,7 +63,12 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
   const templateVars = { user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
-  res.render("urls_new", templateVars);
+  if (req.cookies['user_id']) { // if user is logged in then redirect to login page
+    res.render("urls_new", templateVars);
+  }
+  else {
+    res.redirect(`/login`);
+  }
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
@@ -83,7 +88,6 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/register", (req, res) => {  // new route to registration page
   const templateVars = { user: users[req.cookies['user_id']] };
-  console.log(req.cookies['user_id'])
   if (req.cookies['user_id']) { // if user is logged in then redirect to url page
     res.redirect(`/urls`);
   }
