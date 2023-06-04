@@ -82,8 +82,7 @@ app.get("/u/:id", (req, res) => {
     res.redirect(longURL);
   }
   else {
-    res.statusCode = 404;
-    res.send("404 Page Not Found");
+    res.status(403).send("<h2>The requested shortened URL does not exist<h2>");
   }
 });
 
