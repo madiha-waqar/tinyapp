@@ -73,6 +73,7 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
