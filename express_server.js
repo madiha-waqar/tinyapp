@@ -83,12 +83,23 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/register", (req, res) => {  // new route to registration page
   const templateVars = { user: users[req.cookies['user_id']] };
-  res.render("urls_register", templateVars);
+  console.log(req.cookies['user_id'])
+  if (req.cookies['user_id']) { // if user is logged in then redirect to url page
+    res.redirect(`/urls`);
+  }
+  else {
+    res.render("urls_register", templateVars);
+  }
 });
 
 app.get("/login", (req, res) => {  // new route to login page
   const templateVars = { user: users[req.cookies['user_id']] };
-  res.render("urls_login", templateVars);
+  if (req.cookies['user_id']) { // if user is logged in then redirect to url page
+    res.redirect(`/urls`);
+  }
+  else {
+    res.render("urls_login", templateVars);
+  }
 });
 
 app.post("/urls", (req, res) => {
