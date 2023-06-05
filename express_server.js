@@ -1,5 +1,5 @@
 // **************** REQUIREMENTS *****************
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const express = require("express");
 const bcrypt = require("bcryptjs");
 
@@ -9,7 +9,10 @@ const PORT = 8080; // default port 8080
 const app = express();
 app.set("view engine", "ejs"); // Set EJS as view engine
 app.use(express.urlencoded({ extended: true })); // Express's body-parser to make buffer data readable
-app.use(cookieParser()); // Use Express's cookie-parser
+app.use(cookieSession({
+    name: 'session',
+    keys: ['TINYAPP']
+})); // Use Express's cookie-session middleware
 
 const urlDatabase = {
   "b2xVn2": {
@@ -26,12 +29,12 @@ const users = {  // create global users object
   user1: {
     id: "user1",
     email: "user1@mail.com",
-    password: "user1",
+    password: "user1"
   },
   user2: {
     id: "user2",
     email: "user2@mail.com",
-    password: "user2",
+    password: "user2"
   },
 };
 
@@ -64,7 +67,7 @@ const urlsForUser = (userId) => {
 };
 
 const isUserLoggedIn = (req) => {
-  if (req.cookies['user_id'])
+  if (req.session.user_id)
     return true;
   else
     return false;
@@ -101,7 +104,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlsForUser(req.cookies['user_id']), user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  const templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
   if (isUserLoggedIn(req)) {
     res.render("urls_index", templateVars); // pass the URL data to url view template
   }
@@ -111,7 +114,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
   if (isUserLoggedIn(req)) { // if user is logged in then redirect to login page
-    const templateVars = { user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+    const templateVars = { user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
     res.render("urls_new", templateVars);
   }
   else {
@@ -120,7 +123,7 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.cookies['user_id']), urlUserID: urlDatabase[req.params.id].userID, user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.session.user_id), urlUserID: urlDatabase[req.params.id].userID, user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
   if (urlDatabase[req.params.id]) {
     res.render("urls_show", templateVars);
   }
@@ -143,7 +146,7 @@ app.get("/register", (req, res) => {  // new route to registration page
     res.redirect(`/urls`);
   }
   else {
-    const templateVars = { user: users[req.cookies['user_id']] };
+    const templateVars = { user: users[req.session.user_id] };
     res.render("urls_register", templateVars);
   }
 });
@@ -153,7 +156,7 @@ app.get("/login", (req, res) => {  // new route to login page
     res.redirect(`/urls`);
   }
   else {
-    const templateVars = { user: users[req.cookies['user_id']] };
+    const templateVars = { user: users[req.session.user_id] };
     res.render("urls_login", templateVars);
   }
 });
@@ -162,7 +165,7 @@ app.post("/urls", (req, res) => {
   const urlShortId = generateRandomString();
   urlDatabase[urlShortId] = {  // Update according to new db structure
     longURL: req.body.longURL,
-    userID: req.cookies['user_id']
+    userID: req.session.user_id
   };
   res.redirect(`/urls/${urlShortId}`); //redirect the user to a new page that shows them the new short url they created
 });
@@ -178,7 +181,7 @@ app.post("/urls/:id", (req, res) => { // POST route that updates the URL resourc
     return res.send('User is not logged in!');
   }
 
-  const userID = req.cookies['user_id']
+  const userID = req.session.user_id
   if (!doesUserOwnUrl(userID, req.params.id)) // before update check if the short id is owned/created by user
   {
     return res.send('This url does not belong to this user!');
@@ -198,7 +201,7 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
   {
     return res.send('User is not logged in!');
   }
-  const userID = req.cookies['user_id']
+  const userID = req.session.user_id
   if (!doesUserOwnUrl(userID, req.params.id)) // before delete check if the short id is owned/created by user
   {
     return res.send('This url does not belong to this user!');
@@ -215,12 +218,12 @@ app.post("/login", (req, res) => { // POST route to handle the /login
   if (!bcrypt.compareSync(req.body.password, user.password)) { // use bcrypt to compare the password entered by user matches with hashed password saved in user database
     return res.status(403).send('The password does not match. Please try again.');
   }
-  res.cookie('user_id', user.id); //Sets user_id cookie with matching user's ID on successful login
+  req.session.user_id = user.id; //Sets user_id session with matching user's ID on successful login
   res.redirect(`/urls`);
 });
 
 app.post("/logout", (req, res) => { // POST route to handle the /logout
-  res.clearCookie('user_id'); //Clear the cookie on pressing the logout button
+  res.clearCookie('session'); //Clear the session cookie on pressing the logout button
   res.redirect(`/login`); // redirect to login page
 });
 
@@ -236,10 +239,10 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 10) // Implemeneted bcrypt hash password
     }
-    res.cookie('user_id', id);
-    res.redirect(`/urls`); // redirect to index url page
     console.log(users)
-  }
+    req.session.user_id = id;
+    res.redirect(`/urls`); // redirect to index url page
+    }
   else {
     return res.status(400).send('This email has already been registered with us!');
   }
