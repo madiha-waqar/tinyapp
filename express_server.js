@@ -1,7 +1,8 @@
 const cookieParser = require("cookie-parser");
 const express = require("express");
-const app = express();
+const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
+const app = express();
 
 app.set("view engine", "ejs"); // Set EJS as view engine
 app.use(express.urlencoded({ extended: true })); // Express's body-parser to make buffer data readable
@@ -228,7 +229,7 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
     users[id] = {
       id,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(password, 10) // Implemeneted bcrypt hash password
     }
     res.cookie('user_id', id);
     res.redirect(`/urls`); // redirect to index url page
