@@ -224,6 +224,7 @@ app.post("/login", (req, res) => { // POST route to handle the /login
 
 app.post("/logout", (req, res) => { // POST route to handle the /logout
   res.clearCookie('session'); //Clear the session cookie on pressing the logout button
+  res.clearCookie('session.sig'); // Clear the session signature cookie checking integrity of data
   res.redirect(`/login`); // redirect to login page
 });
 
