@@ -50,14 +50,38 @@ const getUserByEmail = (email) => { // helper function for user lookup through e
   return null;
 }
 
-const urlsForUser = (id) => {
+const urlsForUser = (userId) => {
   const userUrls = {};
-  for (const shortId in urlDatabase) {
-    if ( urlDatabase[shortId].userID === id) {
-      userUrls[shortId] = urlDatabase[shortId];
+  for (const urlShortId in urlDatabase) {
+    if (urlDatabase[urlShortId].userID === userId) {
+      userUrls[urlShortId] = urlDatabase[urlShortId];
     }
   }
   return userUrls; // returns the URLs where the userID is equal to the id of the currently logged-in user.
+};
+
+const isUserLoggedIn = (req) => {
+  if(req.cookies['user_id'])
+    return true;
+  else
+    return false;
+};
+
+const doesShortUrlExists = (urlShortId) => {
+  if(urlDatabase.hasOwnProperty(urlShortId))
+    return true
+  else
+    return false
+}
+
+const doesUserOwnUrl = (userId, urlShortId) => {
+  userUrls = urlsForUser(userId);
+  for (const userUrl in userUrls) {
+    if (userUrl === urlShortId) {
+      return true
+    }
+  }
+  return false;
 };
 
 app.get("/", (req, res) => {
@@ -74,7 +98,7 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlsForUser(req.cookies['user_id']), user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
-  if (req.cookies['user_id']) {
+  if (isUserLoggedIn(req)) {
     res.render("urls_index", templateVars); // pass the URL data to url view template
   }
   else
@@ -82,12 +106,12 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => { // route handler to render page with the form
-  const templateVars = { user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
-  if (req.cookies['user_id']) { // if user is logged in then redirect to login page
+  if (isUserLoggedIn(req)) { // if user is logged in then redirect to login page
+    const templateVars = { user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
     res.render("urls_new", templateVars);
   }
   else {
-    res.redirect(`/login`);
+    res.redirect('/login');
   }
 });
 
@@ -109,46 +133,72 @@ app.get("/u/:id", (req, res) => {
 }});
 
 app.get("/register", (req, res) => {  // new route to registration page
-  const templateVars = { user: users[req.cookies['user_id']] };
-  if (req.cookies['user_id']) { // if user is logged in then redirect to url page
+  if (isUserLoggedIn(req)) { // if user is logged in then redirect to url page
     res.redirect(`/urls`);
   }
   else {
+    const templateVars = { user: users[req.cookies['user_id']] };
     res.render("urls_register", templateVars);
   }
 });
 
 app.get("/login", (req, res) => {  // new route to login page
-  const templateVars = { user: users[req.cookies['user_id']] };
-  if (req.cookies['user_id']) { // if user is logged in then redirect to url page
+  if (isUserLoggedIn(req)) { // if user is logged in then redirect to url page
     res.redirect(`/urls`);
   }
   else {
+    const templateVars = { user: users[req.cookies['user_id']] };
     res.render("urls_login", templateVars);
   }
 });
 
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = {  // Update according to new db structure
+  const urlShortId = generateRandomString();
+  urlDatabase[urlShortId] = {  // Update according to new db structure
     longURL: req.body.longURL,
     userID: req.cookies['user_id']
   };
-  res.redirect(`/urls/${shortURL}`); //redirect the user to a new page that shows them the new short url they created
+  res.redirect(`/urls/${urlShortId}`); //redirect the user to a new page that shows them the new short url they created
 });
 
 app.post("/urls/:id", (req, res) => { // POST route that updates the URL resource
-  if ((urlDatabase[req.params.id].userID) === req.cookies['user_id'])
+  if(!doesShortUrlExists(req.params.id)) // before update check if the short id exists in database
   {
-    urlDatabase[req.params.id].longURL = req.body.updatedURL; // Store the value of updated url against the shorturl selected
-  console.log('This is updated db:', urlDatabase)    
-    res.redirect(`/urls`);
+    return res.send('This url does not exists!');
   }
+
+  if(!isUserLoggedIn(req)) // before update check if the user is logged in into app
+  {
+    return res.send('User is not logged in!');
+  }
+
+  const userID = req.cookies['user_id']
+  if(!doesUserOwnUrl(userID, req.params.id)) // before update check if the short id is owned/created by user
+  {
+    return res.send('This url does not belong to this user!');
+  }
+
+  urlDatabase[req.params.id].longURL = req.body.updatedURL; // Store the value of updated url against the shorturl selected
+  res.redirect(`/urls`);
+
 });
 
 app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL resource
+  if(!doesShortUrlExists(req.params.id))  // check if the short id exists in database
+  {
+    return res.send('This url does not exists!');
+  }
+  if(!isUserLoggedIn(req))// before delete check if the user is logged in into app
+  {
+    return res.send('User is not logged in!');
+  }
+  const userID = req.cookies['user_id']
+  if(!doesUserOwnUrl(userID, req.params.id)) // before delete check if the short id is owned/created by user
+  {
+    return res.send('This url does not belong to this user!');
+  }
   delete urlDatabase[req.params.id]
-  res.redirect(`/urls`);
+  res.redirect('/urls');
 });
 
 app.post("/login", (req, res) => { // POST route to handle the /login
@@ -165,7 +215,7 @@ app.post("/login", (req, res) => { // POST route to handle the /login
 
 app.post("/logout", (req, res) => { // POST route to handle the /logout
   res.clearCookie('user_id'); //Clear the cookie on pressing the logout button
-  res.redirect(`/login`); // redirect to index url page
+  res.redirect(`/login`); // redirect to login page
 });
 
 app.post("/register", (req, res) => { // POST route to handle the /register functionality
