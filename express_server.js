@@ -29,12 +29,12 @@ const users = {  // create global users object
   user1: {
     id: "user1",
     email: "user1@mail.com",
-    password: "user1"
+    password: '$2a$10$LsxauoK.pF6MVj8rs2rKxebb9eiggNZrWiSgZk.3OT7i7MmGxAQfa', // set test data users password as hashed passwords
   },
   user2: {
     id: "user2",
     email: "user2@mail.com",
-    password: "user2"
+    password: '$2a$10$42uu.WRccqQLgNgbpD6W0ulynx0SIRFS4c15PV.LgsRveXkTTe7Qm',
   },
 };
 
