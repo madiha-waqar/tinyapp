@@ -62,14 +62,14 @@ const urlsForUser = (userId) => {
 };
 
 const isUserLoggedIn = (req) => {
-  if(req.cookies['user_id'])
+  if (req.cookies['user_id'])
     return true;
   else
     return false;
 };
 
 const doesShortUrlExists = (urlShortId) => {
-  if(urlDatabase.hasOwnProperty(urlShortId))
+  if (urlDatabase.hasOwnProperty(urlShortId))
     return true
   else
     return false
@@ -117,21 +117,23 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.cookies['user_id']),  urlUserID: urlDatabase[req.params.id].userID, user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.cookies['user_id']), urlUserID: urlDatabase[req.params.id].userID, user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   if (urlDatabase[req.params.id]) {
-  res.render("urls_show", templateVars);
-}});
+    res.render("urls_show", templateVars);
+  }
+});
 
 app.get("/u/:id", (req, res) => {
   if (urlDatabase[req.params.id]) {
-  const longURL = urlDatabase[req.params.id].longURL; // capture longURL from database against /u/:id"
-  if (longURL) {
-    res.redirect(longURL);
+    const longURL = urlDatabase[req.params.id].longURL; // capture longURL from database against /u/:id"
+    if (longURL) {
+      res.redirect(longURL);
+    }
+    else {
+      res.status(404).send("<h2>The requested shortened URL does not exist<h2>");
+    }
   }
-  else {
-    res.status(404).send("<h2>The requested shortened URL does not exist<h2>");
-  }
-}});
+});
 
 app.get("/register", (req, res) => {  // new route to registration page
   if (isUserLoggedIn(req)) { // if user is logged in then redirect to url page
@@ -163,18 +165,18 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => { // POST route that updates the URL resource
-  if(!doesShortUrlExists(req.params.id)) // before update check if the short id exists in database
+  if (!doesShortUrlExists(req.params.id)) // before update check if the short id exists in database
   {
     return res.send('This url does not exists!');
   }
 
-  if(!isUserLoggedIn(req)) // before update check if the user is logged in into app
+  if (!isUserLoggedIn(req)) // before update check if the user is logged in into app
   {
     return res.send('User is not logged in!');
   }
 
   const userID = req.cookies['user_id']
-  if(!doesUserOwnUrl(userID, req.params.id)) // before update check if the short id is owned/created by user
+  if (!doesUserOwnUrl(userID, req.params.id)) // before update check if the short id is owned/created by user
   {
     return res.send('This url does not belong to this user!');
   }
@@ -185,16 +187,16 @@ app.post("/urls/:id", (req, res) => { // POST route that updates the URL resourc
 });
 
 app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL resource
-  if(!doesShortUrlExists(req.params.id))  // check if the short id exists in database
+  if (!doesShortUrlExists(req.params.id))  // check if the short id exists in database
   {
     return res.send('This url does not exists!');
   }
-  if(!isUserLoggedIn(req))// before delete check if the user is logged in into app
+  if (!isUserLoggedIn(req))// before delete check if the user is logged in into app
   {
     return res.send('User is not logged in!');
   }
   const userID = req.cookies['user_id']
-  if(!doesUserOwnUrl(userID, req.params.id)) // before delete check if the short id is owned/created by user
+  if (!doesUserOwnUrl(userID, req.params.id)) // before delete check if the short id is owned/created by user
   {
     return res.send('This url does not belong to this user!');
   }
@@ -207,7 +209,7 @@ app.post("/login", (req, res) => { // POST route to handle the /login
   if (!user) {
     return res.status(403).send('The email is not registered');
   }
-  if (req.body.password !== user.password) {
+  if (!bcrypt.compareSync(req.body.password, user.password)) { // use bcrypt to compare the password entered by user matches with hashed password saved in user database
     return res.status(403).send('The password does not match. Please try again.');
   }
   res.cookie('user_id', user.id); //Sets user_id cookie with matching user's ID on successful login
@@ -229,10 +231,11 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
     users[id] = {
       id,
       email: req.body.email,
-      password: bcrypt.hashSync(password, 10) // Implemeneted bcrypt hash password
+      password: bcrypt.hashSync(req.body.password, 10) // Implemeneted bcrypt hash password
     }
     res.cookie('user_id', id);
     res.redirect(`/urls`); // redirect to index url page
+    console.log(users)
   }
   else {
     return res.status(400).send('This email has already been registered with us!');
