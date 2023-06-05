@@ -73,8 +73,6 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  console.log('Testing user', urlsForUser(req.cookies['user_id']) )
-
   const templateVars = { urls: urlsForUser(req.cookies['user_id']), user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   if (req.cookies['user_id']) {
     res.render("urls_index", templateVars); // pass the URL data to url view template
@@ -94,7 +92,7 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.cookies['user_id']), user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.cookies['user_id']),  urlUserID: urlDatabase[req.params.id].userID, user: users[req.cookies['user_id']] }; // update route to use new user_id cookie and data in users object
   if (urlDatabase[req.params.id]) {
   res.render("urls_show", templateVars);
 }});

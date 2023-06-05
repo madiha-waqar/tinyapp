@@ -16,13 +16,13 @@
       <div class="card-body">
         <% if (!user) { %>
           <div class="alert alert-warning" role="alert">
-            <h5>Access to the individual URL pages is limited to authenticated users only. Please <a href="/login" class="alert-link">login</a> or <a href="/register" class="alert-link">register</a> to view your collection of Short URLs.</h5>
-          </div>
-        <% } else if (user !== urls) { %>
+            <h5>Access to the individual URL pages is limited to authenticated users only. </br>Please <a href="/login" class="alert-link">login</a> or <a href="/register" class="alert-link">register</a> to view your collection of URLs.</h5>
+        </div>
+        <% } else if (user.id !== urlUserID) { %>
           <div class="alert alert-warning" role="alert">
             <h5 class="text-muted">Access to individual URL pages is restricted to their respective owners.</h5>
           </div>
-        <% } %>
+        <% } else { %>
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">Short URL ID: <a href="/u/<%= id %>" target="_blank"><%= id %></a>
         </p>
@@ -41,6 +41,7 @@
       </div>
       <div class="card-footer text-muted"></div>
     </div>
+    <% } %>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
