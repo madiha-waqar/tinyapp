@@ -1,13 +1,15 @@
+// **************** REQUIREMENTS *****************
 const cookieParser = require("cookie-parser");
 const express = require("express");
 const bcrypt = require("bcryptjs");
+
+
+// ***************** SETUP AND MIDDLEWARES *****************
 const PORT = 8080; // default port 8080
 const app = express();
-
 app.set("view engine", "ejs"); // Set EJS as view engine
 app.use(express.urlencoded({ extended: true })); // Express's body-parser to make buffer data readable
 app.use(cookieParser()); // Use Express's cookie-parser
-
 
 const urlDatabase = {
   "b2xVn2": {
@@ -85,6 +87,7 @@ const doesUserOwnUrl = (userId, urlShortId) => {
   return false;
 };
 
+// ***************** ROUTES / ENDPOINTS *****************
 app.get("/", (req, res) => {
   res.send("Hello!"); // response can contain somple string
 });
@@ -242,6 +245,7 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
   }
 });
 
+// ***************** LISTENERS *****************
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
