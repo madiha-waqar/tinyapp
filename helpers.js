@@ -5,7 +5,7 @@ const getUserByEmail = (email, userDatabase) => { // helper function for user lo
       return userDatabase[user]; // returns the user with matching email address
     }
   }
-  return null;
+  return undefined; // return undefined for an email not present in database
 }
 
-module.exports = getUserByEmail;
+module.exports = { getUserByEmail }; // export getUserByEmail function
