@@ -2,6 +2,7 @@
 const cookieSession = require("cookie-session");
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const getUserByEmail = require("./helpers");
 
 
 // ***************** SETUP AND MIDDLEWARES *****************
@@ -46,15 +47,6 @@ const generateRandomString = () => { // generate shorturl/id string of 6 alphanu
   }
   return id;
 };
-
-const getUserByEmail = (email, userDatabase) => { // helper function for user lookup through email address
-  for (const user in userDatabase) {
-    if (userDatabase[user].email === email) {
-      return userDatabase[user]; // returns the user with matching email address
-    }
-  }
-  return null;
-}
 
 const urlsForUser = (userId) => {
   const userUrls = {};
