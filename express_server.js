@@ -2,7 +2,14 @@
 const cookieSession = require("cookie-session");
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const getUserByEmail = require("./helpers");
+const {
+  getUserByEmail,
+  urlsForUser,
+  doesUserOwnUrl,
+  generateRandomString,
+  isUserLoggedIn,
+  doesShortUrlExists
+} = require("./helpers"); // require helper functions
 
 
 // ***************** SETUP AND MIDDLEWARES *****************
@@ -39,49 +46,6 @@ const users = {  // create global users object
   },
 };
 
-const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const generateRandomString = () => { // generate shorturl/id string of 6 alphanumeric charcters   
-  let id = '';
-  for (let i = 0; i < 6; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
-};
-
-const urlsForUser = (userId) => {
-  const userUrls = {};
-  for (const urlShortId in urlDatabase) {
-    if (urlDatabase[urlShortId].userID === userId) {
-      userUrls[urlShortId] = urlDatabase[urlShortId];
-    }
-  }
-  return userUrls; // returns the URLs where the userID is equal to the id of the currently logged-in user.
-};
-
-const isUserLoggedIn = (req) => {
-  if (req.session.user_id)
-    return true;
-  else
-    return false;
-};
-
-const doesShortUrlExists = (urlShortId) => {
-  if (urlDatabase.hasOwnProperty(urlShortId))
-    return true
-  else
-    return false
-}
-
-const doesUserOwnUrl = (userId, urlShortId) => {
-  userUrls = urlsForUser(userId);
-  for (const userUrl in userUrls) {
-    if (userUrl === urlShortId) {
-      return true
-    }
-  }
-  return false;
-};
-
 // ***************** ROUTES / ENDPOINTS *****************
 app.get("/", (req, res) => {
   res.send("Hello!"); // response can contain somple string
@@ -96,7 +60,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlsForUser(req.session.user_id), user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
+  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
   if (isUserLoggedIn(req)) {
     res.render("urls_index", templateVars); // pass the URL data to url view template
   }
@@ -115,7 +79,7 @@ app.get("/urls/new", (req, res) => { // route handler to render page with the fo
 });
 
 app.get("/urls/:id", (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.session.user_id), urlUserID: urlDatabase[req.params.id].userID, user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.session.user_id, urlDatabase), urlUserID: urlDatabase[req.params.id].userID, user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
   if (urlDatabase[req.params.id]) {
     res.render("urls_show", templateVars);
   }
@@ -163,7 +127,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => { // POST route that updates the URL resource
-  if (!doesShortUrlExists(req.params.id)) // before update check if the short id exists in database
+  if (!doesShortUrlExists(req.params.id,urlDatabase )) // before update check if the short id exists in database
   {
     return res.send('This url does not exists!');
   }
@@ -174,7 +138,7 @@ app.post("/urls/:id", (req, res) => { // POST route that updates the URL resourc
   }
 
   const userID = req.session.user_id
-  if (!doesUserOwnUrl(userID, req.params.id)) // before update check if the short id is owned/created by user
+  if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) // before update check if the short id is owned/created by user
   {
     return res.send('This url does not belong to this user!');
   }
@@ -185,7 +149,7 @@ app.post("/urls/:id", (req, res) => { // POST route that updates the URL resourc
 });
 
 app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL resource
-  if (!doesShortUrlExists(req.params.id))  // check if the short id exists in database
+  if (!doesShortUrlExists(req.params.id, urlDatabase))  // check if the short id exists in database
   {
     return res.send('This url does not exists!');
   }
@@ -194,7 +158,7 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
     return res.send('User is not logged in!');
   }
   const userID = req.session.user_id
-  if (!doesUserOwnUrl(userID, req.params.id)) // before delete check if the short id is owned/created by user
+  if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) // before delete check if the short id is owned/created by user
   {
     return res.send('This url does not belong to this user!');
   }
@@ -232,7 +196,6 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 10) // Implemeneted bcrypt hash password
     }
-    console.log(users)
     req.session.user_id = id;
     res.redirect(`/urls`); // redirect to index url page
     }
