@@ -56,14 +56,6 @@ app.get("/", (req, res) => {
   }
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase); // response can contain JSON object
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n"); // response can contain HTML code
-});
-
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
   if (isUserLoggedIn(req)) {
