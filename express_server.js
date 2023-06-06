@@ -47,10 +47,10 @@ const generateRandomString = () => { // generate shorturl/id string of 6 alphanu
   return id;
 };
 
-const getUserByEmail = (email) => { // helper function for user lookup through email address
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user]; // returns the user with matching email address
+const getUserByEmail = (email, userDatabase) => { // helper function for user lookup through email address
+  for (const user in userDatabase) {
+    if (userDatabase[user].email === email) {
+      return userDatabase[user]; // returns the user with matching email address
     }
   }
   return null;
@@ -211,7 +211,7 @@ app.post("/urls/:id/delete", (req, res) => { // POST route that removes a URL re
 });
 
 app.post("/login", (req, res) => { // POST route to handle the /login
-  const user = getUserByEmail(req.body.email); // if entered email matches with users email in database
+  const user = getUserByEmail(req.body.email, users); // if entered email matches with users email in database
   if (!user) {
     return res.status(403).send('The email is not registered');
   }
@@ -234,7 +234,7 @@ app.post("/register", (req, res) => { // POST route to handle the /register func
   if (!req.body.email || !req.body.password) { // if user has not input email address or password
     return res.status(400).send('Email or password fields cannot be empty for user registration');
   }
-  if (!getUserByEmail(req.body.email)) { // if email address doesnt exist in user database then add the user
+  if (!getUserByEmail(req.body.email, users)) { // if email address doesnt exist in user database then add the user
     users[id] = {
       id,
       email: req.body.email,
