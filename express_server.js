@@ -48,7 +48,12 @@ const users = {  // create global users object
 
 // ***************** ROUTES / ENDPOINTS *****************
 app.get("/", (req, res) => {
-  res.send("Hello!"); // response can contain somple string
+  if(isUserLoggedIn(req)) {
+    res.redirect('/urls');
+  }
+  else {
+    res.redirect('/login');
+  }
 });
 
 app.get("/urls.json", (req, res) => {
