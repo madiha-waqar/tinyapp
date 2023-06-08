@@ -87,7 +87,7 @@ app.post('/register', (req, res) => {
 
   // if user has not input email address or password then display relevant error
   if (!req.body.email || !req.body.password) { 
-    return res.status(400).send('Email or password fields cannot be empty for user registration');
+    return res.status(400).send('<h2>Email or password fields cannot be empty for user registration. </h2>');
   }
   
   // if email address doesnt exist in user database then add the user
@@ -105,7 +105,7 @@ app.post('/register', (req, res) => {
     res.redirect('/urls'); 
   }
   else {
-    return res.status(400).send('This email has already been registered with us!');
+    return res.status(400).send('<h2>This email has already been registered with us!</h2>');
   }
 });
 
@@ -129,12 +129,14 @@ app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email, users); 
 
   if (!user) {
-    return res.status(403).send('The email is not registered');
+    //return res.status(403).send('The email is not registered');
+    //return res.status(403).send('<html><body><b>This email is not registered</b></body></html>');
+    return res.status(403).send('<h2>This Email is Not Registered!</h2>');
   }
 
   // use bcrypt to compare the password entered by user matches with hashed password saved in user database
   if (!bcrypt.compareSync(req.body.password, user.password)) { 
-    return res.status(403).send('The password does not match. Please try again.');
+    return res.status(403).send('<h2>The password does not match. Please try again.</h2>');
   }
   
   //Sets user_id session with matching user's ID on successful login
@@ -149,7 +151,7 @@ app.get('/urls', (req, res) => {
     res.render('urls_index', templateVars); 
   }
   else
-    return res.status(403).send('<h2>Please register or login to access URLS<h2>');
+    return res.status(403).send('<h2>Please register or login to access URLS</h2>');
 });
 
 // add new tinyurl in database and redirects the user to a new page that shows them the new url user has created
@@ -188,20 +190,20 @@ app.post('/urls/:id', (req, res) => {
   // before update check if the short id exists in database
   if (!doesShortUrlExists(req.params.id, urlDatabase)) 
   {
-    return res.send('This url does not exists!');
+    return res.send('<h2>This url does not exists!</h2>');
   }
 
   // before update check if the user is logged in into app
   if (!isUserLoggedIn(req)) 
   {
-    return res.send('User is not logged in!');
+    return res.send('<h2>User is not logged in!</h2>');
   }
 
   // before update check if the short id is owned/created by user
   const userID = req.session.user_id
   if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) 
   {
-    return res.send('This url does not belong to this user!');
+    return res.send('<h2>This url does not belong to this user!</h2>');
   }
 
 // Store the value of updated url against the shorturl selected
@@ -218,7 +220,7 @@ app.get('/u/:id', (req, res) => {
       res.redirect(longURL);
     }
     else {
-      res.status(404).send('<h2>The requested shortened URL does not exist<h2>');
+      res.status(404).send('<h2>The requested shortened URL does not exist.<h2>');
     }
   }
 });
@@ -229,20 +231,20 @@ app.post('/urls/:id/delete', (req, res) => {
   // check if the short id exists in database
   if (!doesShortUrlExists(req.params.id, urlDatabase))  
   {
-    return res.send('This url does not exists!');
+    return res.send('<h2>This url does not exists!</h2>');
   }
   
   // before delete check if the user is logged in into app
   if (!isUserLoggedIn(req))
   {
-    return res.send('User is not logged in!');
+    return res.send('<h2>User is not logged in!</h2>');
   }
 
   // before delete check if the short id is owned/created by user
   const userID = req.session.user_id
   if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) 
   {
-    return res.send('This url does not belong to this user!');
+    return res.send('<h2>This url does not belong to this user!</h2>');
   }
   delete urlDatabase[req.params.id]
   res.redirect('/urls');
