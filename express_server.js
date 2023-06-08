@@ -2,6 +2,8 @@
 const cookieSession = require('cookie-session');
 const express = require('express');
 const bcrypt = require('bcryptjs');
+
+// require helper functions
 const {
   getUserByEmail,
   urlsForUser,
@@ -9,18 +11,25 @@ const {
   generateRandomString,
   isUserLoggedIn,
   doesShortUrlExists
-} = require('./helpers'); // require helper functions
-
+} = require('./helpers');
 
 // ***************** SETUP AND MIDDLEWARES *****************
-const PORT = 8080; // default port 8080
+
+// default port 8080
+const PORT = 8080; 
 const app = express();
-app.set('view engine', 'ejs'); // Set EJS as view engine
-app.use(express.urlencoded({ extended: true })); // Express's body-parser to make buffer data readable
+
+// Set EJS as view engine
+app.set('view engine', 'ejs');
+
+// Express's body-parser to make buffer data readable
+app.use(express.urlencoded({ extended: true }));
+
+// Use Express's cookie-session middleware
 app.use(cookieSession({
   name: 'session',
   keys: ['TINYAPP']
-})); // Use Express's cookie-session middleware
+})); 
 
 const urlDatabase = {
   'b2xVn2': {
@@ -33,11 +42,12 @@ const urlDatabase = {
   },
 };
 
-const users = {  // create global users object
+// set test data users password as hashed passwords
+const users = {  
   user1: {
     id: 'user1',
     email: 'user1@mail.com',
-    password: '$2a$10$LsxauoK.pF6MVj8rs2rKxebb9eiggNZrWiSgZk.3OT7i7MmGxAQfa', // set test data users password as hashed passwords
+    password: '$2a$10$LsxauoK.pF6MVj8rs2rKxebb9eiggNZrWiSgZk.3OT7i7MmGxAQfa', 
   },
   user2: {
     id: 'user2',
@@ -47,6 +57,8 @@ const users = {  // create global users object
 };
 
 // ***************** ROUTES / ENDPOINTS *****************
+
+// homepage or root functionaloty. If user logged in then display urls else take to login page
 app.get('/', (req, res) => {
   if (isUserLoggedIn(req)) {
     res.redirect('/urls');
@@ -56,18 +68,105 @@ app.get('/', (req, res) => {
   }
 });
 
+// new route to registration page
+app.get('/register', (req, res) => {  
+
+  // if user is logged in then redirect to url page
+  if (isUserLoggedIn(req)) {   
+    res.redirect('/urls');
+  }
+  else {
+    const templateVars = { user: users[req.session.user_id] };
+    res.render('urls_register', templateVars);
+  }
+});
+
+// POST route to handle the registration functionality
+app.post('/register', (req, res) => { 
+  const id = generateRandomString();
+
+  // if user has not input email address or password then display relevant error
+  if (!req.body.email || !req.body.password) { 
+    return res.status(400).send('Email or password fields cannot be empty for user registration');
+  }
+  
+  // if email address doesnt exist in user database then add the user
+  if (!getUserByEmail(req.body.email, users)) { 
+    users[id] = {
+      id,
+      email: req.body.email,
+
+      // Implemeneted bcrypt hash password before registering new user
+      password: bcrypt.hashSync(req.body.password, 10) 
+    }
+    req.session.user_id = id;
+    
+    // redirect to index url page
+    res.redirect('/urls'); 
+  }
+  else {
+    return res.status(400).send('This email has already been registered with us!');
+  }
+});
+
+// new route to login page
+app.get('/login', (req, res) => {  
+  
+  // if user is logged in then redirect to url page
+  if (isUserLoggedIn(req)) { 
+    res.redirect('/urls');
+  }
+  else {
+    const templateVars = { user: users[req.session.user_id] };
+    res.render('urls_login', templateVars);
+  }
+});
+
+// logging in functionality
+app.post('/login', (req, res) => { 
+  
+  // if entered email matches with users email in database
+  const user = getUserByEmail(req.body.email, users); 
+
+  if (!user) {
+    return res.status(403).send('The email is not registered');
+  }
+
+  // use bcrypt to compare the password entered by user matches with hashed password saved in user database
+  if (!bcrypt.compareSync(req.body.password, user.password)) { 
+    return res.status(403).send('The password does not match. Please try again.');
+  }
+  
+  //Sets user_id session with matching user's ID on successful login
+  req.session.user_id = user.id; 
+  res.redirect('/urls');
+});
+
+// if user is logged in then urls that belongs to him are shown, otherwise error is displayed that user has to register/signin to check the urls
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
+  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] }; 
   if (isUserLoggedIn(req)) {
-    res.render('urls_index', templateVars); // pass the URL data to url view template
+    res.render('urls_index', templateVars); 
   }
   else
     return res.status(403).send('<h2>Please register or login to access URLS<h2>');
 });
 
-app.get('/urls/new', (req, res) => { // route handler to render page with the form
-  if (isUserLoggedIn(req)) { // if user is logged in then redirect to login page
-    const templateVars = { user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
+// add new tinyurl in database and redirects the user to a new page that shows them the new url user has created
+app.post('/urls', (req, res) => {
+  const urlShortId = generateRandomString();
+  urlDatabase[urlShortId] = {  
+    longURL: req.body.longURL,
+    userID: req.session.user_id
+  };
+  res.redirect(`/urls/${urlShortId}`); 
+});
+
+
+// if logged in, user can create a new url which is saved for him, if user not logged in then redirect to login page
+app.get('/urls/new', (req, res) => { 
+  if (isUserLoggedIn(req)) { 
+    const templateVars = { user: users[req.session.user_id] };
     res.render('urls_new', templateVars);
   }
   else {
@@ -75,16 +174,46 @@ app.get('/urls/new', (req, res) => { // route handler to render page with the fo
   }
 });
 
-app.get('/urls/:id', (req, res) => {  // new route to render individual urls by id
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.session.user_id, urlDatabase), urlUserID: urlDatabase[req.params.id].userID, user: users[req.session.user_id] }; // update route to use new user_id session and data in users object
+// displays both tiny (short url id) and long versions of the url
+app.get('/urls/:id', (req, res) => { 
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, urls: urlsForUser(req.session.user_id, urlDatabase), urlUserID: urlDatabase[req.params.id].userID, user: users[req.session.user_id] }; 
   if (urlDatabase[req.params.id]) {
     res.render('urls_show', templateVars);
   }
 });
 
+// POST route that updates the URL resource
+app.post('/urls/:id', (req, res) => { 
+  
+  // before update check if the short id exists in database
+  if (!doesShortUrlExists(req.params.id, urlDatabase)) 
+  {
+    return res.send('This url does not exists!');
+  }
+
+  // before update check if the user is logged in into app
+  if (!isUserLoggedIn(req)) 
+  {
+    return res.send('User is not logged in!');
+  }
+
+  // before update check if the short id is owned/created by user
+  const userID = req.session.user_id
+  if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) 
+  {
+    return res.send('This url does not belong to this user!');
+  }
+
+// Store the value of updated url against the shorturl selected
+  urlDatabase[req.params.id].longURL = req.body.updatedURL; 
+  res.redirect('/urls');
+
+});
+
+// checks the longURL in database against the short url and redirects to longURL
 app.get('/u/:id', (req, res) => {
   if (urlDatabase[req.params.id]) {
-    const longURL = urlDatabase[req.params.id].longURL; // capture longURL from database against /u/:id
+    const longURL = urlDatabase[req.params.id].longURL; 
     if (longURL) {
       res.redirect(longURL);
     }
@@ -94,68 +223,24 @@ app.get('/u/:id', (req, res) => {
   }
 });
 
-app.get('/register', (req, res) => {  // new route to registration page
-  if (isUserLoggedIn(req)) {   // if user is logged in then redirect to url page
-    res.redirect('/urls');
-  }
-  else {
-    const templateVars = { user: users[req.session.user_id] };
-    res.render('urls_register', templateVars);
-  }
-});
-
-app.get('/login', (req, res) => {  // new route to login page
-  if (isUserLoggedIn(req)) { // if user is logged in then redirect to url page
-    res.redirect('/urls');
-  }
-  else {
-    const templateVars = { user: users[req.session.user_id] };
-    res.render('urls_login', templateVars);
-  }
-});
-
-app.post('/urls', (req, res) => {
-  const urlShortId = generateRandomString();
-  urlDatabase[urlShortId] = {  // Update according to new db structure
-    longURL: req.body.longURL,
-    userID: req.session.user_id
-  };
-  res.redirect(`/urls/${urlShortId}`); //redirect the user to a new page that shows them the new short url they created
-});
-
-app.post('/urls/:id', (req, res) => { // POST route that updates the URL resource
-  if (!doesShortUrlExists(req.params.id, urlDatabase)) // before update check if the short id exists in database
+// POST route that removes a URL resource
+app.post('/urls/:id/delete', (req, res) => { 
+  
+  // check if the short id exists in database
+  if (!doesShortUrlExists(req.params.id, urlDatabase))  
   {
     return res.send('This url does not exists!');
   }
-
-  if (!isUserLoggedIn(req)) // before update check if the user is logged in into app
+  
+  // before delete check if the user is logged in into app
+  if (!isUserLoggedIn(req))
   {
     return res.send('User is not logged in!');
   }
 
+  // before delete check if the short id is owned/created by user
   const userID = req.session.user_id
-  if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) // before update check if the short id is owned/created by user
-  {
-    return res.send('This url does not belong to this user!');
-  }
-
-  urlDatabase[req.params.id].longURL = req.body.updatedURL; // Store the value of updated url against the shorturl selected
-  res.redirect('/urls');
-
-});
-
-app.post('/urls/:id/delete', (req, res) => { // POST route that removes a URL resource
-  if (!doesShortUrlExists(req.params.id, urlDatabase))  // check if the short id exists in database
-  {
-    return res.send('This url does not exists!');
-  }
-  if (!isUserLoggedIn(req))// before delete check if the user is logged in into app
-  {
-    return res.send('User is not logged in!');
-  }
-  const userID = req.session.user_id
-  if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) // before delete check if the short id is owned/created by user
+  if (!doesUserOwnUrl(userID, req.params.id, urlDatabase)) 
   {
     return res.send('This url does not belong to this user!');
   }
@@ -163,43 +248,13 @@ app.post('/urls/:id/delete', (req, res) => { // POST route that removes a URL re
   res.redirect('/urls');
 });
 
-app.post('/login', (req, res) => { // POST route to handle the /login
-  const user = getUserByEmail(req.body.email, users); // if entered email matches with users email in database
-  if (!user) {
-    return res.status(403).send('The email is not registered');
-  }
-  if (!bcrypt.compareSync(req.body.password, user.password)) { // use bcrypt to compare the password entered by user matches with hashed password saved in user database
-    return res.status(403).send('The password does not match. Please try again.');
-  }
-  req.session.user_id = user.id; //Sets user_id session with matching user's ID on successful login
-  res.redirect('/urls');
+// log out and clear both session cookie and cookie signature and redirects to login
+app.post('/logout', (req, res) => {
+  res.clearCookie('session'); 
+  res.clearCookie('session.sig');
+  res.redirect('/login');
 });
 
-app.post('/logout', (req, res) => { // POST route to handle the /logout
-  res.clearCookie('session'); //Clear the session cookie on pressing the logout button
-  res.clearCookie('session.sig'); // Clear the session signature cookie checking integrity of data
-  res.redirect('/login'); // redirect to login page
-});
-
-app.post('/register', (req, res) => { // POST route to handle the /register functionality
-  const id = generateRandomString();
-
-  if (!req.body.email || !req.body.password) { // if user has not input email address or password
-    return res.status(400).send('Email or password fields cannot be empty for user registration');
-  }
-  if (!getUserByEmail(req.body.email, users)) { // if email address doesnt exist in user database then add the user
-    users[id] = {
-      id,
-      email: req.body.email,
-      password: bcrypt.hashSync(req.body.password, 10) // Implemeneted bcrypt hash password
-    }
-    req.session.user_id = id;
-    res.redirect('/urls'); // redirect to index url page
-  }
-  else {
-    return res.status(400).send('This email has already been registered with us!');
-  }
-});
 
 // ***************** LISTENERS *****************
 app.listen(PORT, () => {
